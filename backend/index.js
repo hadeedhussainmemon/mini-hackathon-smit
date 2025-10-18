@@ -9,7 +9,7 @@ let client
 async function getDb() {
   if (!client) {
     const uri = process.env.MONGODB_URI || ''
-    if (!uri) return null
+    if (!uri) throw new Error('MONGODB_URI not set')
     client = new MongoClient(uri)
     await client.connect()
   }
@@ -19,15 +19,32 @@ async function getDb() {
 app.get('/api/hello', (req, res) => res.json({ message: 'Hello from backend' }))
 
 app.get('/api/items', async (req, res) => {
-  const db = await getDb()
-  if (!db) return res.status(500).json({ error: 'MONGODB_URI not set' })
-  const items = await db.collection('items').find({}).limit(10).toArray()
-  res.json({ items })
+  try {
+    const db = await getDb()
+    const items = await db.collection('items').find({}).limit(10).toArray()
+    res.json({ items })
+  } catch (err) {
+    console.error('Error in /api/items:', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: err.message || 'INTERNAL_SERVER_ERROR' })
+  }
+})
+
+// health-check for Vercel/monitoring
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true })
 })
 
 if (require.main === module) {
   const port = process.env.PORT || 5000
   app.listen(port, () => console.log('Backend listening on', port))
 }
+
+// log unhandled errors so Vercel logs show why a function crashed
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection at:', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception thrown:', err && err.stack ? err.stack : err)
+})
 
 module.exports.handler = serverless(app)
