@@ -1,3 +1,171 @@
+# PitchCraft — Tumhara AI Startup Partner
+
+PitchCraft is a small demo app that helps students and founders turn a simple startup idea into a polished pitch using React, Firebase (or Supabase), and Google Gemini (Generative Language API).
+
+This README is bilingual (English + Roman Urdu) and focuses on setup, Gemini integration, debugging, and local development on Windows.
+
+---
+
+## Quick summary — kya hai? (English + Roman Urdu)
+
+- PitchCraft ek AI-powered tool hai jo startup ideas se name, tagline, elevator pitch, problem/solution, target audience, aur landing page content generate karta hai.
+- Built with React (Vite), Tailwind, Firebase (Auth + Firestore) and Google Gemini for generation.
+
+---
+
+## What you'll find in the repo
+
+- `server/` — small Node/Express proxy that calls Google's Generative Language API (safe place for server-side API key)
+- `src/` — React frontend (CreatePitch, Generated, Dashboard, etc.)
+- `lib/` — helpers for Azure/Firebase and server-side Gemini wrapper
+- `functions/` — (optional) Firebase Functions implementation
+
+---
+
+## Prerequisites
+
+- Node.js 18+ and npm on your machine
+- A Google Cloud project with the Generative Language API enabled and a valid API key
+- Optional: Firebase project for Auth + Firestore (or Supabase)
+
+---
+
+## Environment variables (.env)
+
+Create a `.env` file in the project root (do NOT commit it). Example keys the project expects:
+
+```env
+# Frontend (Vite) - public keys only
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_API_BASE=http://localhost:4000
+
+# Server-side Gemini key (keep this secret!)
+GEMINI_API_KEY=YOUR_SERVER_SIDE_GEMINI_API_KEY
+# Optionally override model name returned by the API list
+# Example: models/gemini-2.5-flash
+GEMINI_MODEL=models/gemini-2.5-flash
+```
+
+Roman Urdu: `.env` file banao aur apni keys wahan dal do. Server key kabhi client mein expose mat karo.
+
+---
+
+## Local development (Windows cmd.exe)
+
+1) Install dependencies:
+
+```bat
+npm install
+```
+
+2) Start the server proxy (it will load `.env`):
+
+```bat
+npm run start:server
+# or directly
+node server/index.js
+```
+
+You should see a masked key log and model info:
+```
+GEMINI_API_KEY loaded (masked): ********1234
+Using Gemini model: models/gemini-2.5-flash (override with GEMINI_MODEL env var)
+Gemini proxy server listening on port 4000
+```
+
+3) Start the frontend (Vite):
+
+```bat
+npm run dev
+```
+
+Open `http://localhost:3000` (or the port Vite prints).
+
+---
+
+## Gemini troubleshooting and model issues
+
+If the server returns a 404 mentioning `models/gemini-1.5-flash is not found`, it means the model your code tried isn't available to your API key. To debug:
+
+1) Call the models list endpoint we added:
+
+```bat
+# from a second terminal while server is running
+node -e "fetch('http://localhost:4000/api/models').then(r=>r.json()).then(j=>console.log(JSON.stringify(j,null,2))).catch(e=>console.error(e))"
+```
+
+2) Look for `models/<name>` entries like `models/gemini-2.5-flash` and set `GEMINI_MODEL` to one of those exact names.
+
+3) Restart the server and retry generation.
+
+If you get `API_KEY_INVALID`:
+- Rotate the API key in Google Cloud Console
+- Ensure Generative Language API is enabled for your project
+- Check API key restrictions (temporarily remove restrictions during local testing)
+- Ensure billing is enabled for the Google project
+
+Security note: If a key has been posted publicly, rotate/delete it immediately and never commit `.env`.
+
+---
+
+## Why we use a server proxy
+
+- Generative Language API keys must be kept secret. The server proxy calls Google and returns a cleaned JSON payload that the frontend can consume.
+- The server also cleans fences (```json) when parsing Gemini responses and offers a `/api/models` debug endpoint.
+
+---
+
+## Frontend debug tips
+
+- If `/generated` is blank, we added debug helpers:
+  - After generation, the client sets `window.__lastGeneratedPitch` (open Console and inspect)
+  - The Generated page exposes `window.__currentPitch` when rendered
+  - We also persist the last pitch to `localStorage.lastPitch` so the Generated page recovers if the in-memory state is lost (for hot-reload/dev)
+
+To inspect in browser console:
+
+```js
+console.log(window.__lastGeneratedPitch)
+console.log(window.__currentPitch)
+localStorage.getItem('lastPitch')
+```
+
+---
+
+## Production notes
+
+- Use Cloud Secret Manager or Firebase Functions secrets to store `GEMINI_API_KEY` in production — do not use `.env` in hosted environments.
+- Restrict API keys properly (IP or service restriction) once deployed.
+- Consider migrating the server proxy to a serverless function (Vercel serverless, Firebase Functions) and read the secret from secure storage.
+
+---
+
+## Example flow (developer)
+
+1) Start server: `npm run start:server`
+2) Start frontend: `npm run dev`
+3) Open `http://localhost:3000`
+4) Create pitch and inspect devtools for logs
+
+---
+
+## License & Contributing
+
+Open source — MIT. Contributions welcome.
+
+---
+
+If you want, I can also:
+- Add a small CLI script to rotate/search for a valid `GEMINI_MODEL` automatically
+- Make the server fallback to the first supported `generateContent` model it finds (safe but should be explicit)
+
+If you want the README translated into full Roman Urdu sections I can expand the translations.
+
 # 💼 PitchCraft – Tumhara AI Startup Partner
 
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?logo=vite)](https://vitejs.dev/)
