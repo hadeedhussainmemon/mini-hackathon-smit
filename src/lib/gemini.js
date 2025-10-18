@@ -8,6 +8,8 @@ export const generatePitch = async (ideaData) => {
       body: JSON.stringify({ ideaData }),
     })
     const json = await res.json()
+    // Debug: log server response for easier diagnosis in browser console
+    console.log('generatePitch response from server:', json)
     if (!json.success) throw new Error(json.error || 'Generation failed')
     return json.data
   } catch (error) {
@@ -24,6 +26,7 @@ export const regeneratePitch = async (ideaData, fieldToRegenerate) => {
       body: JSON.stringify({ ideaData, field: fieldToRegenerate }),
     })
     const json = await res.json()
+    console.log('regeneratePitch response from server:', json)
     if (!json.success) throw new Error(json.error || 'Regeneration failed')
     return json.data
   } catch (error) {

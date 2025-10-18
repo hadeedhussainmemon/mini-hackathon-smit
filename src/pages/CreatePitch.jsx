@@ -29,9 +29,14 @@ export default function CreatePitch() {
     const ideaData = { idea, industry, tone }
     try {
       const pitchData = await generatePitch(ideaData)
+      console.log('Received pitchData:', pitchData)
       if (user) await savePitch(user.uid, ideaData, pitchData)
       setCurrentIdea(ideaData)
       setCurrentPitch(pitchData)
+  // Debug: expose last generated pitch to window for quick inspection in browser console
+  try { window.__lastGeneratedPitch = pitchData } catch (e) {}
+  // Persist a local copy so Generated page can recover if zustand state isn't available
+  try { localStorage.setItem('lastPitch', JSON.stringify({ ideaData, pitchData })) } catch (e) {}
       navigate('/generated')
     } catch (err) {
       // Show full error details for debugging

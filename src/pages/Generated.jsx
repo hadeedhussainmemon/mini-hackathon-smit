@@ -11,19 +11,43 @@ export default function Generated() {
   const user = useStore((s) => s.user)
   const currentIdea = useStore((s) => s.currentIdea)
   const currentPitch = useStore((s) => s.currentPitch)
+  const setCurrentIdea = useStore((s) => s.setCurrentIdea)
   const setCurrentPitch = useStore((s) => s.setCurrentPitch)
   const [copied, setCopied] = useState(false)
   const [regenerating, setRegenerating] = useState(null)
 
   useEffect(() => {
     if (!user) return navigate('/login')
-    if (!currentPitch || !currentIdea) navigate('/create')
+    // If store is empty try to hydrate from localStorage (helpful during dev/hot reload)
+    if ((!currentPitch || !currentIdea)) {
+      try {
+        const raw = localStorage.getItem('lastPitch')
+        if (raw) {
+          const obj = JSON.parse(raw)
+          if (obj && obj.ideaData && obj.pitchData) {
+            setCurrentPitch(obj.pitchData)
+            // also restore the idea so the Generated page has both pieces of state
+            try { setCurrentIdea(obj.ideaData) } catch (e) {}
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to hydrate pitch from localStorage', e)
+      }
+      // After attempting hydration, only redirect if we still don't have both pieces
+      if (!currentPitch || !currentIdea) navigate('/create')
+    }
+    // Debug: expose currentPitch for inspection in browser console
+    try { window.__currentPitch = currentPitch } catch (e) {}
   }, [user, currentPitch, currentIdea])
 
   const handleCopy = (text) => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (e) {
+      console.error('Clipboard write failed', e)
+    }
   }
 
   const handleRegenerate = async (field) => {
@@ -44,18 +68,18 @@ export default function Generated() {
     const pageWidth = doc.internal.pageSize.width
     let yPos = 20
     doc.setFontSize(24)
-    doc.text(currentPitch.startupName, pageWidth / 2, yPos, { align: 'center' })
+    doc.text(currentPitch.startupName || 'Startup', pageWidth / 2, yPos, { align: 'center' })
     yPos += 15
     doc.setFontSize(14)
-    doc.text(currentPitch.tagline, pageWidth / 2, yPos, { align: 'center' })
+    doc.text(currentPitch.tagline || '', pageWidth / 2, yPos, { align: 'center' })
     yPos += 20
     const sections = [
-      { title: 'Elevator Pitch', content: currentPitch.elevatorPitch },
-      { title: 'Problem Statement', content: currentPitch.problemStatement },
-      { title: 'Solution', content: currentPitch.solutionStatement },
-      { title: 'Target Audience', content: currentPitch.targetAudience },
-      { title: 'Unique Value Proposition', content: currentPitch.uniqueValueProposition },
-      { title: 'Landing Page Hero', content: currentPitch.landingPageHero },
+      { title: 'Elevator Pitch', content: currentPitch.elevatorPitch || '' },
+      { title: 'Problem Statement', content: currentPitch.problemStatement || '' },
+      { title: 'Solution', content: currentPitch.solutionStatement || '' },
+      { title: 'Target Audience', content: currentPitch.targetAudience || '' },
+      { title: 'Unique Value Proposition', content: currentPitch.uniqueValueProposition || '' },
+      { title: 'Landing Page Hero', content: currentPitch.landingPageHero || '' },
     ]
     doc.setFontSize(10)
     sections.forEach((section) => {
@@ -64,11 +88,13 @@ export default function Generated() {
       doc.text(section.title, 20, yPos)
       yPos += 7
       doc.setFont('helvetica', 'normal')
-      const lines = doc.splitTextToSize(section.content, pageWidth - 40)
-      doc.text(lines, 20, yPos)
-      yPos += lines.length * 5 + 10
+      const lines = doc.splitTextToSize(section.content || '', pageWidth - 40)
+      if (lines && lines.length) {
+        doc.text(lines, 20, yPos)
+        yPos += lines.length * 5 + 10
+      }
     })
-    doc.save(`${currentPitch.startupName}-pitch.pdf`)
+    doc.save(`${(currentPitch.startupName || 'startup').replace(/[^a-z0-9-_ ]/gi, '')}-pitch.pdf`)
   }
 
   if (!currentPitch || !currentIdea) {
@@ -90,10 +116,10 @@ export default function Generated() {
       <div className="container mx-auto px-6 py-12">
         <div className="max-w-5xl mx-auto">
           <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-12 mb-8 text-center shadow-2xl">
-            <h1 className="text-5xl font-bold mb-4">{currentPitch.startupName} ✨</h1>
-            <p className="text-2xl opacity-90 mb-6">{currentPitch.tagline}</p>
+            <h1 className="text-5xl font-bold mb-4">{currentPitch.startupName || 'Unnamed Startup'} ✨</h1>
+            <p className="text-2xl opacity-90 mb-6">{currentPitch.tagline || ''}</p>
             <div className="flex flex-wrap justify-center gap-4">
-              {currentPitch.colorPalette.map((color, i) => (
+              {(currentPitch.colorPalette || []).map((color, i) => (
                 <div key={i} className="w-12 h-12 rounded-full border-2 border-white shadow-lg" style={{ backgroundColor: color }} title={color} />
               ))}
             </div>
@@ -108,12 +134,12 @@ export default function Generated() {
               ['Unique Value Proposition 💎', 'uniqueValueProposition'],
               ['Landing Page Hero 🚀', 'landingPageHero'],
             ].map(([title, key]) => (
-              <ContentCard key={key} title={title} content={currentPitch[key]} onCopy={handleCopy} onRegenerate={() => handleRegenerate(key)} isRegenerating={regenerating === key} copied={copied} />
+              <ContentCard key={key} title={title} content={currentPitch[key] || ''} onCopy={handleCopy} onRegenerate={() => handleRegenerate(key)} isRegenerating={regenerating === key} copied={copied} />
             ))}
 
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Logo Ideas 🎨</h3>
-              <p className="text-gray-700 whitespace-pre-line">{currentPitch.logoIdeas}</p>
+              <p className="text-gray-700 whitespace-pre-line">{currentPitch.logoIdeas || ''}</p>
             </div>
           </div>
         </div>
