@@ -9,7 +9,10 @@ let client
 async function getDb() {
   if (!client) {
     const uri = process.env.MONGODB_URI || ''
-    if (!uri) throw new Error('MONGODB_URI not set')
+    if (!uri) {
+      console.warn('getDb: MONGODB_URI not set; returning null DB')
+      return null
+    }
     client = new MongoClient(uri)
     await client.connect()
   }
@@ -21,6 +24,11 @@ app.get('/api/hello', (req, res) => res.json({ message: 'Hello from backend' }))
 app.get('/api/items', async (req, res) => {
   try {
     const db = await getDb()
+    if (!db) {
+      // Graceful fallback when DB is not configured or connection failed
+      console.warn('/api/items: DB not available, returning empty items')
+      return res.json({ items: [], warning: 'DB_NOT_CONFIGURED' })
+    }
     const items = await db.collection('items').find({}).limit(10).toArray()
     res.json({ items })
   } catch (err) {
