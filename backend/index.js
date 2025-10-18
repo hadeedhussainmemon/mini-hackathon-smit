@@ -43,8 +43,17 @@ app.get('/api/health', (req, res) => {
 })
 
 if (require.main === module) {
-  const port = process.env.PORT || 5000
-  app.listen(port, () => console.log('Backend listening on', port))
+  const port = process.env.PORT || 4000
+  const server = app.listen(port, () => console.log('Backend listening on', port))
+  server.on('error', (err) => {
+    if (err && err.code === 'EADDRINUSE') {
+      console.error(`Port ${port} is already in use. Stop the process using that port or set a different PORT environment variable.`)
+      console.error('On Windows: run `netstat -ano | findstr :' + port + '` then `taskkill /PID <pid> /F`')
+      process.exit(1)
+    }
+    console.error('Server error:', err && err.stack ? err.stack : err)
+    process.exit(1)
+  })
 }
 
 // log unhandled errors so Vercel logs show why a function crashed
