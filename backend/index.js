@@ -42,6 +42,17 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true })
 })
 
+// debug endpoint: reports presence of MONGODB_URI (does NOT return the value)
+app.get('/api/debug', (req, res) => {
+  try {
+    const present = !!process.env.MONGODB_URI
+    res.json({ MONGODB_URI_present: present })
+  } catch (err) {
+    console.error('Error in /api/debug:', err && err.stack ? err.stack : err)
+    res.status(500).json({ error: 'DEBUG_FAILED' })
+  }
+})
+
 if (require.main === module) {
   const port = process.env.PORT || 4000
   const server = app.listen(port, () => console.log('Backend listening on', port))
