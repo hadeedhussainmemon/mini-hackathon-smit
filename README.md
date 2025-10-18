@@ -570,8 +570,8 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 📞 Contact
 
 - **Email:** your-email@example.com
-- **GitHub:** [@yourusername](https://github.com/yourusername)
-- **LinkedIn:** [Your Name](https://linkedin.com/in/yourprofile)
+- **GitHub:** [@hadeedhussainmemon](https://github.com/hadeedhussainmemon)
+- **LinkedIn:** [Hadeed Hussain](https://linkedin.com/in/hadeedhussainmemon)
 
 ---
 
