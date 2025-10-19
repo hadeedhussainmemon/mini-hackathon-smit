@@ -5,6 +5,8 @@ import { regeneratePitch } from '@/lib/gemini'
 import jsPDF from 'jspdf'
 import PageTopBar from '@/components/PageTopBar'
 import ContentCard from '@/components/ContentCard'
+import HeroPreview from '@/components/HeroPreview'
+import LandingPreview from '@/components/LandingPreview'
 
 export default function Generated() {
   const navigate = useNavigate()
@@ -119,8 +121,8 @@ export default function Generated() {
             <h1 className="text-5xl font-bold mb-4">{currentPitch.startupName || 'Unnamed Startup'} ✨</h1>
             <p className="text-2xl opacity-90 mb-6">{currentPitch.tagline || ''}</p>
             <div className="flex flex-wrap justify-center gap-4">
-              {(currentPitch.colorPalette || []).map((color, i) => (
-                <div key={i} className="w-12 h-12 rounded-full border-2 border-white shadow-lg" style={{ backgroundColor: color }} title={color} />
+              {(Array.isArray(currentPitch.colorPalette) ? currentPitch.colorPalette : []).map((color, i) => (
+                <div key={i} className="w-12 h-12 rounded-full border-2 border-white shadow-lg" style={{ backgroundColor: color }} title={String(color)} />
               ))}
             </div>
           </div>
@@ -132,15 +134,18 @@ export default function Generated() {
               ['Solution ✅', 'solutionStatement'],
               ['Target Audience 👥', 'targetAudience'],
               ['Unique Value Proposition 💎', 'uniqueValueProposition'],
-              ['Landing Page Hero 🚀', 'landingPageHero'],
             ].map(([title, key]) => (
-              <ContentCard key={key} title={title} content={currentPitch[key] || ''} onCopy={handleCopy} onRegenerate={() => handleRegenerate(key)} isRegenerating={regenerating === key} copied={copied} />
+              <ContentCard key={key} title={title} content={String(currentPitch[key] || '')} onCopy={handleCopy} onRegenerate={() => handleRegenerate(key)} isRegenerating={regenerating === key} copied={copied} />
             ))}
 
             <div className="bg-white rounded-xl shadow-lg p-8">
               <h3 className="text-2xl font-bold text-gray-800 mb-4">Logo Ideas 🎨</h3>
               <p className="text-gray-700 whitespace-pre-line">{currentPitch.logoIdeas || ''}</p>
             </div>
+              <div className="mt-8">
+                <h3 className="text-lg font-bold mb-3">Landing Page Preview</h3>
+                <LandingPreview pitch={currentPitch} />
+              </div>
           </div>
         </div>
       </div>

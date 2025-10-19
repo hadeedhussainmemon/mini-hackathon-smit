@@ -12,6 +12,7 @@ import Dashboard from '@/pages/Dashboard'
 import CreatePitch from '@/pages/CreatePitch'
 import Generated from '@/pages/Generated'
 import PitchView from '@/pages/PitchView'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 function App() {
   const setUser = useStore((state) => state.setUser)
@@ -45,7 +46,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create" element={<CreatePitch />} />
-        <Route path="/generated" element={<Generated />} />
+  <Route path="/generated" element={<ErrorBoundary><Generated /></ErrorBoundary>} />
         <Route path="/pitch/:id" element={<PitchView />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
